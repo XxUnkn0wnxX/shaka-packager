@@ -206,18 +206,45 @@ else
   BUILD_KIND="static"
 fi
 
-if ! PACKAGER_TAG="$("$GIT_BIN" -C "$REPO_ROOT" describe --tags --match 'v[0-9]*' --abbrev=0 HEAD 2>/dev/null)"; then
-  die "Failed to resolve release tag from git history."
+# Release Please records Shaka's source version here at each release.
+VERSION_MANIFEST="$REPO_ROOT/.release-please-manifest.json"
+if ! VERSION_NAME="$("$PYTHON_BIN" -c '
+import json
+import re
+import sys
+
+
+try:
+  with open(sys.argv[1], "r", encoding="utf-8") as manifest_file:
+    manifest_data = json.load(manifest_file)
+except (OSError, UnicodeError, json.JSONDecodeError) as error:
+  print(f"Unable to read source version from {sys.argv[1]}: {error}",
+        file=sys.stderr)
+  raise SystemExit(1)
+
+if not isinstance(manifest_data, dict) or "." not in manifest_data:
+  print(f'Missing string key "." in {sys.argv[1]}', file=sys.stderr)
+  raise SystemExit(1)
+
+version_name = manifest_data["."]
+if not isinstance(version_name, str):
+  print(f'Manifest key "." is not a string in {sys.argv[1]}',
+        file=sys.stderr)
+  raise SystemExit(1)
+
+number = r"(?:0|[1-9][0-9]*)"
+if not re.fullmatch(rf"{number}\.{number}\.{number}", version_name):
+  print(f'Invalid source version in manifest key ".": {version_name}',
+        file=sys.stderr)
+  raise SystemExit(1)
+
+print(version_name)
+' "$VERSION_MANIFEST")"; then
+  die "Failed to resolve Shaka version from $VERSION_MANIFEST"
 fi
-if [[ "$PACKAGER_TAG" == "" ]]; then
-  die "No matching release tag found for HEAD."
-fi
-if [[ ! "$PACKAGER_TAG" =~ '^v([0-9]+)\.([0-9]+)(\.[0-9]+)?$' ]]; then
-  die "Unexpected or unsupported release tag: ${PACKAGER_TAG}"
-fi
-VERSION_NAME="${PACKAGER_TAG#v}"
+
 PACKAGER_SHORT_SHA="$("$GIT_BIN" -C "$REPO_ROOT" rev-parse --short=12 HEAD)"
-PACKAGER_VERSION="${PACKAGER_TAG}-${PACKAGER_SHORT_SHA}"
+PACKAGER_VERSION="v${VERSION_NAME}-${PACKAGER_SHORT_SHA}"
 
 if [[ -n "${SHAKA_BUILD_DIR-}" ]]; then
   BUILD_ROOT="$(resolve_child_path "$SHAKA_BUILD_DIR")"

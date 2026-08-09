@@ -167,11 +167,12 @@ example:
 SHAKA_JOBS=4 ./build-local.zsh
 ```
 
-The nearest reachable Shaka release tag determines the output version. A
-branch based on `v3.9.3` therefore publishes under `dist/3.9.3/`, while one
-based on `v3.9.1` publishes under `dist/3.9.1/`. Static mode publishes only the
-`packager` executable. With `--libs`, the version directory also contains
-`lib/libpackager.dylib`; vendored third-party dependencies remain static.
+The source-controlled `.release-please-manifest.json` file determines the output
+version via its `"."` value. A manifest value of `3.9.3` therefore publishes
+under `dist/3.9.3/`, while `3.9.1` publishes under `dist/3.9.1/`. Static mode
+publishes only the `packager` executable. With `--libs`, the version directory
+also contains `lib/libpackager.dylib`; vendored third-party dependencies remain
+static.
 
 Static and shared builds use separate temporary trees under
 `builder/<version>/`. The script always configures before it builds. Cleanup
