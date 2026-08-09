@@ -91,6 +91,12 @@ There are several ways you can get Shaka Packager.
   [Build Instructions](https://github.com/shaka-project/shaka-packager/blob/main/docs/source/build_instructions.md)
   for details.
 
+This fork also includes [`build-local.zsh`](build-local.zsh), a macOS-only
+compatibility helper intended for building on older Intel Macs. See the
+[older Intel macOS build helper
+documentation](docs/source/build_instructions.md#older-intel-macos-compatibility-helper)
+for its requirements, workarounds, options, and versioned output layout.
+
 # Useful Links
 
 - [Announcement List](https://groups.google.com/forum/#!forum/shaka-packager-users)

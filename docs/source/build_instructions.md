@@ -118,6 +118,67 @@ To create a portable, fully-static build for Linux, configure CMake with:
   -DCMAKE_CXX_COMPILER=/path/to/x86_64-linux-musl-g++
 ```
 
+#### Older Intel macOS compatibility helper
+
+This fork includes [`build-local.zsh`](../../build-local.zsh), a macOS-only
+helper intended for older Intel macOS systems, particularly macOS Big Sur with
+Apple Clang 13 and Intel Homebrew under `/usr/local`. It is not the general
+cross-platform build entry point and is not intended for Linux, Windows, or
+Apple Silicon Homebrew installations under `/opt/homebrew`.
+
+The helper keeps the normal vendored-dependency build but works around issues
+seen with this older toolchain:
+
+- Apple Clang implicitly finding Homebrew Abseil headers in
+  `/usr/local/include` instead of using only the vendored Abseil sources. The
+  script temporarily unlinks Homebrew Abseil and restores it on normal exit or
+  interruption.
+- C++14, C++17, and C++20 compatibility diagnostics being promoted to errors
+  while compiling valid C++17 Abseil and generated protobuf code.
+- Environment variables and Homebrew paths from unrelated local builds leaking
+  into CMake dependency discovery.
+
+It uses the repository's vendored dependencies, so it does not require
+reinstalling system copies of libxml2, protobuf, Abseil, or similar libraries.
+It pins `/usr/local/bin/cmake`, `/usr/local/bin/ninja`,
+`/usr/local/bin/python3`, the Apple command-line compilers, and a macOS 11.0
+deployment target.
+
+From the repository root, run:
+
+```shell
+# Configure, then build the default static Packager executable.
+./build-local.zsh
+
+# Remove temporary CMake/Ninja build directories first, then configure/build.
+./build-local.zsh --clean
+
+# Configure BUILD_SHARED_LIBS=ON, then build Packager and libpackager.dylib.
+./build-local.zsh --libs
+
+# Combine the explicit cleanup and shared-library modes.
+./build-local.zsh --clean --libs
+```
+
+Builds use eight parallel jobs by default. Override that when needed with, for
+example:
+
+```shell
+SHAKA_JOBS=4 ./build-local.zsh
+```
+
+The nearest reachable Shaka release tag determines the output version. A
+branch based on `v3.9.3` therefore publishes under `dist/3.9.3/`, while one
+based on `v3.9.1` publishes under `dist/3.9.1/`. Static mode publishes only the
+`packager` executable. With `--libs`, the version directory also contains
+`lib/libpackager.dylib`; vendored third-party dependencies remain static.
+
+Static and shared builds use separate temporary trees under
+`builder/<version>/`. The script always configures before it builds. Cleanup
+occurs only when `--clean` is explicitly supplied, and `--clean` never removes
+`dist`. After a successful build, artifacts are staged and checked before only
+the matching `dist/<version>` directory is replaced.
+
 #### Windows
 
 Windows build instructions are similar. Using Tools > Command Line >
