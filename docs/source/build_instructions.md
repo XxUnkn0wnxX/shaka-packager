@@ -137,12 +137,28 @@ seen with this older toolchain:
   while compiling valid C++17 Abseil and generated protobuf code.
 - Environment variables and Homebrew paths from unrelated local builds leaking
   into CMake dependency discovery.
+- Legacy GYP releases parsing Xcode Command Line Tools versions as a
+  single-digit major version. The compatibility change for CLT 13 is applied
+  only to the disposable dependency checkout under `builder/`.
 
-It uses the repository's vendored dependencies, so it does not require
-reinstalling system copies of libxml2, protobuf, Abseil, or similar libraries.
-It pins `/usr/local/bin/cmake`, `/usr/local/bin/ninja`,
-`/usr/local/bin/python3`, the Apple command-line compilers, and a macOS 11.0
-deployment target.
+The build backend is detected from the checked-out source; there is no legacy
+option to select manually:
+
+- CMake-era versions synchronize the branch's recorded Git submodules, then
+  configure CMake and build with Ninja. This path pins `/usr/local/bin/cmake`,
+  `/usr/local/bin/ninja`, `/usr/local/bin/python3`, the Apple command-line
+  compilers, and a macOS 11.0 deployment target.
+- Older GYP-era versions synchronize the revisions in `DEPS` inside an isolated
+  source checkout under `builder/`, always run the GYP configuration hooks, and
+  then build with Ninja. A compatible depot_tools revision is downloaded into
+  `builder/.legacy-tools/` on the first legacy run, so depot_tools does not need
+  to be installed globally. This path uses Apple's `/usr/bin/python3` instead
+  of a newer Homebrew Python.
+
+Both paths use the dependencies recorded by the checked-out Shaka source, so
+they do not require reinstalling system copies of libxml2, protobuf, Abseil, or
+similar libraries. A legacy build needs network access the first time it fetches
+depot_tools and the `DEPS` repositories.
 
 From the repository root, run:
 
@@ -150,10 +166,11 @@ From the repository root, run:
 # Configure, then build the default static Packager executable.
 ./build-local.zsh
 
-# Remove temporary CMake/Ninja build directories first, then configure/build.
+# Remove modern and legacy temporary build/dependency directories first, then
+# configure/build. Existing dist artifacts are retained until publish succeeds.
 ./build-local.zsh --clean
 
-# Configure BUILD_SHARED_LIBS=ON, then build Packager and libpackager.dylib.
+# Build Packager plus libpackager.dylib using the current backend's shared mode.
 ./build-local.zsh --libs
 
 # Combine the explicit cleanup and shared-library modes.
@@ -168,17 +185,23 @@ SHAKA_JOBS=4 ./build-local.zsh
 ```
 
 The source-controlled `.release-please-manifest.json` file determines the output
-version via its `"."` value. A manifest value of `3.9.3` therefore publishes
-under `dist/3.9.3/`, while `3.9.1` publishes under `dist/3.9.1/`. Static mode
-publishes only the `packager` executable. With `--libs`, the version directory
-also contains `lib/libpackager.dylib`; vendored third-party dependencies remain
-static.
+version via its `"."` value. For older source trees without that manifest, the
+helper reads the first strict `X.Y.Z` release heading in `CHANGELOG.md`. It never
+uses Git tags to choose the output version. A source version of `3.9.3` therefore
+publishes under `dist/3.9.3/`, while `2.6.1` publishes under `dist/2.6.1/`.
+Static mode publishes only the `packager` executable. With `--libs`, the version
+directory also contains `lib/libpackager.dylib`; third-party dependencies remain
+static. Legacy shared builds are relocated only in the staged copy so this same
+two-file layout remains runnable.
 
 Static and shared builds use separate temporary trees under
-`builder/<version>/`. The script always configures before it builds. Cleanup
-occurs only when `--clean` is explicitly supplied, and `--clean` never removes
-`dist`. After a successful build, artifacts are staged and checked before only
-the matching `dist/<version>` directory is replaced.
+`builder/<version>/`; legacy versions share one isolated dependency checkout
+between those two output trees. The script always refreshes the applicable
+dependency metadata and configures before it builds. Cleanup occurs only when
+`--clean` is explicitly supplied. It removes the script-managed `builder/`
+tree and old root `out/` GYP output, but never removes `dist`. After a successful
+build, artifacts are staged and checked before only the matching
+`dist/<version>` directory is replaced.
 
 #### Windows
 

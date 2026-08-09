@@ -92,8 +92,10 @@ There are several ways you can get Shaka Packager.
   for details.
 
 This fork also includes [`build-local.zsh`](build-local.zsh), a macOS-only
-compatibility helper intended for building on older Intel Macs. See the
-[older Intel macOS build helper
+compatibility helper intended for building on older Intel Macs. It detects
+whether the checked-out version uses modern CMake/submodules or legacy
+GYP/depot_tools, so the same command works across the fork's version branches.
+See the [older Intel macOS build helper
 documentation](docs/source/build_instructions.md#older-intel-macos-compatibility-helper)
 for its requirements, workarounds, options, and versioned output layout.
 
