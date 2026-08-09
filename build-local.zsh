@@ -428,7 +428,7 @@ collect_libpackager_dependencies() {
   local -a raw_deps=()
   raw_deps=( ${(f)"$("$OTOOL_BIN" -L "$binary" | "$AWK_BIN" 'NR>1 { print $1 }')"} )
   for dep_line in "${raw_deps[@]}"; do
-    if [[ "$dep_line" == *"/libpackager.dylib" ]]; then
+    if [[ "$dep_line" == "libpackager.dylib" || "$dep_line" == */libpackager.dylib ]]; then
       deps+=("$dep_line")
     fi
   done
@@ -444,7 +444,7 @@ adjust_legacy_shared_stage_artifacts() {
   local dependency
   libpackager_deps=( ${(f)"$(collect_libpackager_dependencies "$staged_packager")"} )
   if (( ${#libpackager_deps[@]} != 1 )); then
-    die "Shared legacy validation: expected exactly one libpackager dependency ending /libpackager.dylib, found ${#libpackager_deps[@]}"
+    die "Shared legacy validation: expected exactly one libpackager.dylib load command; found ${#libpackager_deps[@]}"
   fi
   dependency="${libpackager_deps[1]}"
 
@@ -481,7 +481,7 @@ validate_staged_artifacts() {
   if (( BUILD_SHARED )); then
     libpackager_deps=( ${(f)"$(collect_libpackager_dependencies "$staged_packager")"} )
     if (( ${#libpackager_deps[@]} != 1 )); then
-      die "Shared validation: expected exactly one libpackager dependency ending /libpackager.dylib."
+      die "Shared validation: expected exactly one relocated @rpath/libpackager.dylib load command."
     fi
     if [[ "${libpackager_deps[1]}" != "@rpath/libpackager.dylib" ]]; then
       die "Shared validation: missing expected @rpath/libpackager.dylib dependency."
