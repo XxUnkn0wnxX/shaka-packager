@@ -19,7 +19,7 @@ Options:
   --clean   Run one upfront cleanup of script-managed build dirs only:
             <build-root>, build, build-*, builder, builder-*, out, out-*,
             out_*, cmake-build-*.
-            Dist is never touched by --clean.
+            The repository root, tracked files, and dist are never removed.
   --libs    Configure libpackager as shared (default is static). Vendored
             third-party dependencies remain static.
   --help    Show this help text.
