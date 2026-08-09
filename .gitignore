@@ -19,6 +19,7 @@ AGENTS.md
 /dist/
 /dist-*
 tmp/
+/0.5.3
 /build-*/
 /builder/
 /builder-*
