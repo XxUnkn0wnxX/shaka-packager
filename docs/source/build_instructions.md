@@ -2,6 +2,15 @@
 
 Shaka Packager supports building on Windows, Mac and Linux host systems.
 
+## Fork-local helper compatibility
+
+This fork retains `build-local.zsh` consistently across its version branches,
+and records this branch's source version as `2.6.1` in
+`.release-please-manifest.json`. However, v2.6.1 predates the project's CMake
+build. The modern helper's CMake-based static and `--libs` modes are therefore
+not supported on this branch. Use the depot_tools, GYP, and Ninja instructions
+below when building v2.6.1.
+
 ## Linux build dependencies
 
 Most development is done on Ubuntu (currently 14.04, Trusty Tahr). The

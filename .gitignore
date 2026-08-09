@@ -35,3 +35,20 @@
 /packager/tools/clang/
 /packager/tools/gyp/
 /packager/tools/valgrind/
+
+# Fork-local build helper outputs and checkout metadata.
+*.swp
+.cache
+build/
+.venv/
+AGENTS.md
+/dist/
+/dist-*
+tmp/
+/0.5.3
+/build-*/
+/builder/
+/builder-*
+/cmake-build-*
+junit-reports/
+.vscode/

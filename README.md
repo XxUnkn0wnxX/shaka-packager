@@ -93,6 +93,11 @@ There are several ways you can get Shaka Packager.
   [Build Instructions](https://github.com/google/shaka-packager/blob/master/docs/source/build_instructions.md)
   for details.
 
+This fork retains [`build-local.zsh`](build-local.zsh) consistently across its
+version branches. Shaka Packager v2.6.1 predates the project's CMake build and
+uses depot_tools, GYP, and Ninja, so the modern CMake helper is not a supported
+build path on this branch. Follow the branch's legacy build instructions above.
+
 # Useful Links
 
 - [Announcement List](https://groups.google.com/forum/#!forum/shaka-packager-users)
