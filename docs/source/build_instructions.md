@@ -2,14 +2,91 @@
 
 Shaka Packager supports building on Windows, Mac and Linux host systems.
 
-## Fork-local helper compatibility
+## Older Intel macOS compatibility helper
 
-This fork retains `build-local.zsh` consistently across its version branches,
-and records this branch's source version as `2.6.1` in
-`.release-please-manifest.json`. However, v2.6.1 predates the project's CMake
-build. The modern helper's CMake-based static and `--libs` modes are therefore
-not supported on this branch. Use the depot_tools, GYP, and Ninja instructions
-below when building v2.6.1.
+This fork includes [`build-local.zsh`](../../build-local.zsh), a macOS-only
+helper intended for older Intel macOS systems, particularly macOS Big Sur with
+Apple Clang 13 and Intel Homebrew under `/usr/local`. It is not the general
+cross-platform build entry point and is not intended for Linux, Windows, or
+Apple Silicon Homebrew installations under `/opt/homebrew`.
+
+The helper keeps the source version's recorded dependency build but works
+around issues seen with this older toolchain:
+
+- Apple Clang implicitly finding Homebrew Abseil headers in
+  `/usr/local/include` instead of using only the vendored Abseil sources. On
+  CMake-era versions, the script temporarily unlinks Homebrew Abseil and
+  restores it on normal exit or interruption.
+- C++14, C++17, and C++20 compatibility diagnostics being promoted to errors
+  while compiling valid C++17 Abseil and generated protobuf code on CMake-era
+  versions.
+- Environment variables and Homebrew paths from unrelated local builds leaking
+  into dependency discovery.
+- Legacy GYP releases parsing Xcode Command Line Tools versions as a
+  single-digit major version. The compatibility change for CLT 13 is applied
+  only to the disposable dependency checkout under `builder/`.
+
+The build backend is detected from the checked-out source; there is no legacy
+option to select manually:
+
+- CMake-era versions synchronize the branch's recorded Git submodules, then
+  configure CMake and build with Ninja. This path pins `/usr/local/bin/cmake`,
+  `/usr/local/bin/ninja`, `/usr/local/bin/python3`, the Apple command-line
+  compilers, and a macOS 11.0 deployment target.
+- Older GYP-era versions, including this branch, synchronize the revisions in
+  `DEPS` inside an isolated source checkout under `builder/`, always run the GYP
+  configuration hooks, and then build with Ninja. A compatible depot_tools
+  revision is downloaded into `builder/.legacy-tools/` on the first legacy run,
+  so depot_tools does not need to be installed globally. This path uses Apple's
+  `/usr/bin/python3` instead of a newer Homebrew Python.
+
+Both paths use the dependencies recorded by the checked-out Shaka source, so
+they do not require reinstalling system copies of libxml2, protobuf, Abseil, or
+similar libraries. A legacy build needs network access the first time it fetches
+depot_tools and the `DEPS` repositories.
+
+From the repository root, run:
+
+```shell
+# Configure, then build the default static Packager executable.
+./build-local.zsh
+
+# Remove modern and legacy temporary build/dependency directories first, then
+# configure/build. Existing dist artifacts are retained until publish succeeds.
+./build-local.zsh --clean
+
+# Build Packager plus libpackager.dylib using the current backend's shared mode.
+./build-local.zsh --libs
+
+# Combine the explicit cleanup and shared-library modes.
+./build-local.zsh --clean --libs
+```
+
+Builds use eight parallel jobs by default. Override that when needed with, for
+example:
+
+```shell
+SHAKA_JOBS=4 ./build-local.zsh
+```
+
+The source-controlled `.release-please-manifest.json` file determines the output
+version via its `"."` value. For older source trees without that manifest, the
+helper reads the first strict `X.Y.Z` release heading in `CHANGELOG.md`. It never
+uses Git tags to choose the output version. This branch therefore publishes
+under `dist/2.6.1/`. Static mode publishes only the `packager` executable. With
+`--libs`, the version directory also contains `lib/libpackager.dylib`;
+third-party dependencies remain static. Legacy shared builds are relocated only
+in the staged copy so this same two-file layout remains runnable.
+
+Static and shared builds use separate temporary trees under
+`builder/<version>/`; legacy versions share one isolated dependency checkout
+between those two output trees. The script always refreshes the applicable
+dependency metadata and configures before it builds. Cleanup occurs only when
+`--clean` is explicitly supplied. It removes the script-managed `builder/`
+tree—including that disposable legacy checkout—and old root `out/` GYP output,
+but never removes the real Git checkout or `dist`. After a successful build,
+artifacts are staged and checked before only the matching `dist/<version>`
+directory is replaced.
 
 ## Linux build dependencies
 

@@ -93,10 +93,13 @@ There are several ways you can get Shaka Packager.
   [Build Instructions](https://github.com/google/shaka-packager/blob/master/docs/source/build_instructions.md)
   for details.
 
-This fork retains [`build-local.zsh`](build-local.zsh) consistently across its
-version branches. Shaka Packager v2.6.1 predates the project's CMake build and
-uses depot_tools, GYP, and Ninja, so the modern CMake helper is not a supported
-build path on this branch. Follow the branch's legacy build instructions above.
+This fork also includes [`build-local.zsh`](build-local.zsh), a macOS-only
+compatibility helper intended for building on older Intel Macs. It detects
+whether the checked-out version uses modern CMake/submodules or legacy
+GYP/depot_tools, so the same command works across the fork's version branches.
+See the [older Intel macOS build helper
+documentation](docs/source/build_instructions.md#older-intel-macos-compatibility-helper)
+for its requirements, workarounds, options, and versioned output layout.
 
 # Useful Links
 
