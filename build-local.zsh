@@ -22,7 +22,7 @@ Options:
 Environment:
   SHAKA_BUILD_DIR   Build root override (default: <repo>/builder)
   SHAKA_DIST_DIR    Dist root override (default: <repo>/dist)
-  SHAKA_JOBS        Parallel jobs (default: logical CPUs, fallback ncpu, fallback 1)
+  SHAKA_JOBS        Parallel jobs (default: 8)
 EOF
 }
 
@@ -237,17 +237,7 @@ fi
 if [[ -n "${SHAKA_JOBS-}" ]]; then
   JOBS="${SHAKA_JOBS}"
 else
-  if JOBS="$(
-    /usr/sbin/sysctl -n hw.logicalcpu 2>/dev/null
-  )"; then
-    true
-  elif JOBS="$(
-    /usr/sbin/sysctl -n hw.ncpu 2>/dev/null
-  )"; then
-    true
-  else
-    JOBS=1
-  fi
+  JOBS=8
 fi
 if [[ ! "$JOBS" == <-> ]] || (( JOBS < 1 )); then
   die "Invalid SHAKA_JOBS value: ${JOBS}"
