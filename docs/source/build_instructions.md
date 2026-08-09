@@ -199,9 +199,10 @@ Static and shared builds use separate temporary trees under
 between those two output trees. The script always refreshes the applicable
 dependency metadata and configures before it builds. Cleanup occurs only when
 `--clean` is explicitly supplied. It removes the script-managed `builder/`
-tree and old root `out/` GYP output, but never removes `dist`. After a successful
-build, artifacts are staged and checked before only the matching
-`dist/<version>` directory is replaced.
+tree—including that disposable legacy checkout—and old root `out/` GYP output,
+but never removes the real Git checkout or `dist`. After a successful build,
+artifacts are staged and checked before only the matching `dist/<version>`
+directory is replaced.
 
 #### Windows
 
